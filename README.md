@@ -74,7 +74,7 @@ O runner usa DATABASE_URL_UNPOOLED quando definida. Use conexão direta para a m
 6. Faça o deploy e confira autenticação, criação de convite e jornada numa base de teste. As imagens privadas são incluídas pelo outputFileTracingIncludes.
 7. Antes de convidar jogadores reais, confirme que a branch de produção tem seis personagens livres e nenhum convite de teste.
 
-A publicação na Vercel não foi executada: o pedido foi preparar o deploy. Não há URL pública desta entrega.
+Publicado em produção: [Ecos de Ballynyr](https://ecos-de-ballynyr.vercel.app). Painel: [Área do mestre](https://ecos-de-ballynyr.vercel.app/admin). O projeto está conectado a este repositório para deploys após novos pushes. DATABASE_URL e ADMIN_KEY foram cadastradas como Secrets somente em Production; SITE_URL corresponde ao endereço público. O ambiente publicado foi verificado: página inicial, login, consulta ao Neon, seis imagens privadas e encerramento de sessão.
 
 ## Verificação
 
@@ -95,4 +95,5 @@ npm run test:e2e
 TEST_BASE_URL permite testar uma origem diferente de localhost:3000. O teste cria convites, revoga um, substitui um link e conclui seis jornadas; ele deixa esses dados na branch de testes e exige uma base vazia para uma nova execução. Não rode contra a campanha real.
 
 O relatório de entrega descreve as verificações e limitações. As capturas do questionário não revelam personagens; capturas administrativas e de revelação devem ser vistas somente pelo mestre.
+
 
