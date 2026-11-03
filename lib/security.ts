@@ -7,7 +7,7 @@ export class HttpError extends Error { constructor(public status: number, messag
 export const secretToken = () => randomBytes(32).toString('base64url');
 export function adminSecret() {
   const key = process.env.ADMIN_KEY;
-  if (!key || key.length < 32) throw new HttpError(503, 'Configure uma chave administrativa de pelo menos 32 caracteres.');
+  if (!key) throw new HttpError(503, 'Configure a chave administrativa ADMIN_KEY na Vercel.');
   return key;
 }
 export function equal(a: string, b: string) { const x=Buffer.from(hashToken(a),'hex'), y=Buffer.from(hashToken(b),'hex'); return timingSafeEqual(x,y); }

@@ -68,7 +68,7 @@ O runner usa DATABASE_URL_UNPOOLED quando definida. Use conexão direta para a m
 
 1. Suba o conteúdo deste diretório para um repositório privado. Inclua `package-lock.json`, `assets`, `schema.sql` e `next.config.ts`. Exclua `.env.local`, node_modules, .next e relatórios de testes.
 2. Importe como projeto Next.js. Use Node.js 22.x ou 24.x. `vercel.json` já define o build.
-3. Configure em Production: DATABASE_URL (conexão Neon pooled), ADMIN_KEY (valor aleatório de pelo menos 32 caracteres) e SITE_URL (origem HTTPS final, sem caminho).
+3. Configure em Production: DATABASE_URL (conexão Neon pooled), ADMIN_KEY (chave não vazia, sem tamanho mínimo obrigatório) e SITE_URL (origem HTTPS final, sem caminho). Uma chave longa e aleatória continua recomendada.
 4. Execute a migração com a conexão direta da branch de produção. O banco criado nesta entrega já está migrado.
 5. Em Preview, use outra branch Neon e outra chave. SITE_URL deve corresponder exatamente à origem do preview. Não copie a conexão de produção para previews.
 6. Faça o deploy e confira autenticação, criação de convite e jornada numa base de teste. As imagens privadas são incluídas pelo outputFileTracingIncludes.
