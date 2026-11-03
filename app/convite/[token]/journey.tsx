@@ -8,13 +8,14 @@ export default function Journey({token}:{token:string}) {
  const [idx,setIdx]=useState(0);const [selected,setSelected]=useState<number|null>(null);
  const [character,setCharacter]=useState<Character|null>(null);const [error,setError]=useState('');
  const [busy,setBusy]=useState(false);const lock=useRef(false);const heading=useRef<HTMLHeadingElement>(null);
+ const [recoverable,setRecoverable]=useState(false),[canRecover,setCanRecover]=useState(false),[masterKey,setMasterKey]=useState('');
  async function api(endpoint:string,payload:object) {
   const res=await fetch(`/api/quiz/${endpoint}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,...payload})});
   const data=await res.json();if(!res.ok)throw Error(data.error||'Não foi possível continuar.');return data;
  }
  useEffect(()=>{let active=true;
   fetch('/api/quiz/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})})
-  .then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);return d;})
+  .then(async r=>{const d=await r.json();if(!r.ok){if(active){setRecoverable(!!d.recoverable);setCanRecover(!!d.canRecover);}throw Error(d.error);}return d;})
   .then(d=>{if(!active)return;setName(d.name);setStage(d.stage);if(d.character)setCharacter(d.character);
    if(d.answers){setAnswers(d.answers);setIdx(Math.min(d.answers.length,11));if(d.answers.length===12)setSelected(d.answers[11]);}})
   .catch(e=>{if(active){setError(e.message);setStage('unavailable');}});return()=>{active=false;};
@@ -22,6 +23,11 @@ export default function Journey({token}:{token:string}) {
  useEffect(()=>{if(stage==='quiz'||stage==='result')heading.current?.focus();},[idx,stage]);
  async function start(){if(lock.current)return;lock.current=true;setBusy(true);setError('');
   try{await api('start',{name});setStage('quiz');}catch(e){setError(e instanceof Error?e.message:'Falha ao iniciar.');}finally{lock.current=false;setBusy(false);}}
+ async function recover(){if(lock.current)return;lock.current=true;setBusy(true);setError('');
+  try{
+   if(!canRecover){const r=await fetch('/api/admin/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:masterKey})});const d=await r.json();if(!r.ok)throw Error(d.error);setCanRecover(true);}
+   const d=await api('recover',{});setName(d.name);setAnswers(d.answers);setIdx(Math.min(d.answers.length,11));setSelected(d.answers.length===12?d.answers[11]:null);setStage('quiz');
+  }catch(e){setError(e instanceof Error?e.message:'Não foi possível retomar.');}finally{setMasterKey('');lock.current=false;setBusy(false);}}
  async function proceed(){if(selected===null||lock.current)return;lock.current=true;setBusy(true);setError('');
   const next=[...answers.slice(0,idx),selected];
   try{await api('progress',{answers:next});setAnswers(next);
@@ -30,7 +36,7 @@ export default function Journey({token}:{token:string}) {
   }catch(e){setError(e instanceof Error?e.message:'Falha ao salvar.');}finally{lock.current=false;setBusy(false);}}
  return <main className={`journey ${stage==='result'?'revealed':''}`}>
  {stage==='loading'?<section className="center"><div className="seal small" aria-hidden="true">✦</div><p role="status">A névoa se abre…</p></section>:
- stage==='unavailable'?<section className="center"><div className="eyebrow">O CAMINHO ESTÁ FECHADO</div><h1>Um chamado<br/>silencioso.</h1><p role="alert" className="error">{error}</p><a href="/" className="text-link">Voltar ao limiar</a></section>:
+ stage==='unavailable'?<section className="center"><div className="eyebrow">O CAMINHO ESTÁ FECHADO</div><h1>Um chamado<br/>silencioso.</h1><p role="alert" className="error">{error}</p>{recoverable&&<><p className="small-copy">O mestre pode autorizar a retomada aqui. As respostas salvas serão mantidas e a sessão anterior deixará de funcionar.</p><form onSubmit={e=>{e.preventDefault();void recover();}}>{!canRecover&&<><label htmlFor="recovery-key">Chave do mestre para autorizar a retomada</label><input id="recovery-key" type="password" autoComplete="current-password" value={masterKey} onChange={e=>setMasterKey(e.target.value)} required/></>}<button className="primary" disabled={busy||(!canRecover&&!masterKey)}>{busy?'Autorizando…':'Autorizar retomada neste navegador'}</button></form></>}<a href="/" className="text-link" style={{marginTop:24}}>Voltar ao limiar</a></section>:
  stage==='intro'?<section className="center intro"><div className="eyebrow">UM CONVITE • UM DESTINO</div><div className="seal" aria-hidden="true">✦</div><h1>O chamado<br/><em>é seu.</em></h1><p>Uma vila distante repousa entre a névoa e o silêncio. Algo o chama para lá.</p><div className="rule"/><p className="small-copy">Doze escolhas revelarão o caminho que mais se aproxima do seu. Responda como você agiria.</p>
  <form onSubmit={e=>{e.preventDefault();void start();}}><label htmlFor="name">Como devemos chamar você?</label><input id="name" autoComplete="given-name" minLength={2} maxLength={80} required value={name} onChange={e=>setName(e.target.value)} placeholder="Seu nome"/><button className="primary" disabled={busy||name.trim().length<2}>{busy?'Abrindo o caminho…':'Atender ao chamado'} <span aria-hidden="true">→</span></button></form>
  <p className="fine-print">Seu progresso fica salvo neste navegador. O convite é individual e só pode ser iniciado uma vez.</p></section>:

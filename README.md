@@ -32,7 +32,7 @@ npm start
 - O convite nominal funciona como um segredo de acesso: quem abrir primeiro e iniciar assume a jornada. O nome não verifica identidade. Envie cada link diretamente ao respectivo jogador.
 - Convites novos expiram em 30 dias. Depois de iniciada, a jornada pode ser retomada no mesmo navegador enquanto o cookie de 30 dias existir. Respostas são salvas ao clicar em Continuar.
 - A conclusão é permanente. Reenviar a solicitação devolve o mesmo resultado; nunca consome outro personagem. O convite não pode iniciar uma segunda jornada.
-- Se o jogador perder o navegador ou seus cookies antes de concluir, o mestre pode usar Novo link. Isso invalida o acesso anterior e reinicia suas respostas. Resultados concluídos não podem ser liberados pelo painel.
+- Se o jogador perder o navegador ou seus cookies antes de concluir, a página oferece Autorizar retomada neste navegador. O mestre pode usar sua sessão administrativa ou entrar com a chave para transferir a jornada, preservando as respostas e invalidando a sessão anterior. O link continua individual e o resultado permanece único. Novo link, no painel, continua disponível para substituir o convite e reiniciar as respostas. Resultados concluídos não podem ser transferidos por essa recuperação.
 - A revelação usa a ilustração original com transição de névoa, iluminação e composição responsiva. Não há espera artificial. Movimento reduzido é respeitado; não há áudio automático.
 
 ## Mestre e segurança
@@ -95,5 +95,6 @@ npm run test:e2e
 TEST_BASE_URL permite testar uma origem diferente de localhost:3000. O teste cria convites, revoga um, substitui um link e conclui seis jornadas; ele deixa esses dados na branch de testes e exige uma base vazia para uma nova execução. Não rode contra a campanha real.
 
 O relatório de entrega descreve as verificações e limitações. As capturas do questionário não revelam personagens; capturas administrativas e de revelação devem ser vistas somente pelo mestre.
+
 
 

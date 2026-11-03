@@ -4,7 +4,7 @@ type Invite={id:string;player_name:string;status:string;character_id:string|null
 type Character={id:string;name:string;tag:string};
 type Audit={event:string;invite_id:string;created_at:string};
 const statuses:Record<string,string>={new:'Aguardando',started:'Em jornada',completed:'Revelado',revoked:'Revogado'};
-const events:Record<string,string>={invite_created:'Convite criado',journey_started:'Jornada iniciada',character_assigned:'Destino revelado',invite_rotate:'Link substituído',invite_revoke:'Convite revogado'};
+const events:Record<string,string>={invite_created:'Convite criado',journey_started:'Jornada iniciada',journey_recovered:'Retomada autorizada pelo mestre',character_assigned:'Destino revelado',invite_rotate:'Link substituído',invite_revoke:'Convite revogado'};
 export default function Admin(){
  const [authenticated,setAuthenticated]=useState(false),[checking,setChecking]=useState(true),[key,setKey]=useState('');
  const [rows,setRows]=useState<Invite[]>([]),[characters,setCharacters]=useState<Character[]>([]),[audit,setAudit]=useState<Audit[]>([]);
@@ -26,3 +26,4 @@ export default function Admin(){
  {error&&<p className="error" role="alert">{error}</p>}{notice&&<p role="status" className="notice">{notice}</p>}
  </main>;
 }
+

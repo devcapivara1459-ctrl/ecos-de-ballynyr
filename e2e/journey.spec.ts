@@ -21,18 +21,35 @@ test('jornada completa, recuperação, segurança e seis atribuições concorren
  expect((await outsider.post('/api/quiz/start',{data:{token:url.split('/').pop(),name:'Outro'}})).status()).toBe(409);
  url=(await rotated.json()).url;let token=url.split('/').pop();
  const context=await browser.newContext({baseURL:base,viewport:{width:390,height:844},reducedMotion:'reduce'});
- const page=await context.newPage();const pageErrors:string[]=[];page.on('pageerror',e=>pageErrors.push(e.message));
+ let page=await context.newPage();const pageErrors:string[]=[];page.on('pageerror',e=>pageErrors.push(e.message));
  await page.goto('/');await expect(page.getByRole('heading',{name:/ECOS DE/})).toBeVisible();
  await page.screenshot({path:'test-results/home-mobile.png',fullPage:true});
  await page.goto(url);await expect(page.getByRole('button',{name:'Atender ao chamado'})).toBeEnabled();
+ const sessionBeforeStart=(await context.cookies()).find(c=>c.name.startsWith('ecos_'))?.value;
+ expect(sessionBeforeStart).toBeTruthy();
  await page.getByRole('button',{name:'Atender ao chamado'}).click();
  await expect(page.getByText('ESCOLHA 01')).toBeVisible();
+ expect((await context.cookies()).find(c=>c.name.startsWith('ecos_'))?.value).toBe(sessionBeforeStart);
  const hidden=await page.content();expect(hidden).not.toContain('Rhiona');expect(hidden).not.toContain('Malik');
  expect((await context.request.get(`/api/portrait?id=rhiona&token=${token}`)).status()).toBe(403);
  expect((await outsider.post('/api/quiz/start',{data:{token,name:'Intruso'}})).status()).toBe(409);
  expect((await context.request.post('/api/quiz/submit',{headers:origin,data:{token,answers:[0]}})).status()).toBe(400);
  await page.getByRole('button',{name:/A Procuro marcas/}).click();await page.getByRole('button',{name:'Continuar'}).click();
  await expect(page.getByText('ESCOLHA 02')).toBeVisible();await page.reload();await expect(page.getByText('ESCOLHA 02')).toBeVisible();
+ // Lose the original browser session, then let the master authorize recovery.
+ expect((await outsider.post('/api/quiz/recover',{data:{token}})).status()).toBe(401);
+ const originalSession=(await context.cookies()).find(c=>c.name.startsWith('ecos_'))!.value;
+ await context.clearCookies();await page.reload();
+ await expect(page.getByText('Este convite já foi iniciado, mas a sessão não foi encontrada neste navegador.',{exact:false})).toBeVisible();
+ await page.getByLabel('Chave do mestre para autorizar a retomada').fill(process.env.ADMIN_KEY!);
+ await page.getByRole('button',{name:'Autorizar retomada neste navegador'}).click();
+ await expect(page.getByText('ESCOLHA 02')).toBeVisible();
+ const recoveredSession=(await context.cookies()).find(c=>c.name.startsWith('ecos_')&&c.name!=='ecos_admin')!;
+ expect(recoveredSession.value).not.toBe(originalSession);
+ const stale=await request.newContext({baseURL:base,extraHTTPHeaders:{...origin,Cookie:`${recoveredSession.name}=${originalSession}`}});
+ expect((await stale.post('/api/quiz/state',{data:{token}})).status()).toBe(409);
+ expect((await stale.post('/api/quiz/submit',{data:{token,answers:Array(12).fill(0)}})).status()).toBe(409);
+ await stale.dispose();
  await page.screenshot({path:'test-results/question-mobile.png',fullPage:true});
  for(let i=1;i<12;i++){
   await expect(page.getByText(`ESCOLHA ${String(i+1).padStart(2,'0')}`)).toBeVisible();
@@ -48,6 +65,7 @@ test('jornada completa, recuperação, segurança e seis atribuições concorren
  expect((await outsider.post('/api/quiz/state',{data:{token}})).status()).toBe(409);
  expect((await outsider.get(`/api/portrait?id=${first}&token=${token}`)).status()).toBe(401);
  expect((await admin.patch('/api/admin/invites',{data:{id,action:'rotate'}})).status()).toBe(409);
+ expect((await admin.post('/api/quiz/recover',{data:{token}})).status()).toBe(409);
  const extra=await Promise.all(Array.from({length:8},(_,i)=>admin.post('/api/admin/invites',{data:{name:`Concorrente ${i}`}})));
  expect(extra.filter(r=>r.status()===201)).toHaveLength(5);expect(extra.filter(r=>r.status()===409)).toHaveLength(3);
  const links=await Promise.all(extra.filter(r=>r.status()===201).map(async r=>(await r.json()).url));
